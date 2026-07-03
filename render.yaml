@@ -1,0 +1,19 @@
+services:
+  - type: worker
+    name: telegram-shop-bot
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m bot
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: OWNER_ID
+        sync: false
+      - key: APIFY_TOKEN
+        sync: false
+      - key: ALIEXPRESS_APP_KEY
+        sync: false
+      - key: ALIEXPRESS_APP_SECRET
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.12
