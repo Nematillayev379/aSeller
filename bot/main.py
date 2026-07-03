@@ -39,7 +39,7 @@ async def self_ping():
     url = os.environ.get("RENDER_EXTERNAL_URL", "https://aseller.onrender.com")
     while True:
         try:
-            await asyncio.sleep(600)
+            await asyncio.sleep(300)
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
                     logging.getLogger("ping").info("Self-ping: %s -> %s", url, resp.status)
