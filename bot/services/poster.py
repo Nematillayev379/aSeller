@@ -17,7 +17,7 @@ class Poster:
         return InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(
                 text="🛒 Buyurtma berish",
-                url=f"tg://user?id={OWNER_ID}",
+                url="https://t.me/rayimqulova111",
             )]
         ])
 

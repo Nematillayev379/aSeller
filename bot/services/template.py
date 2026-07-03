@@ -39,10 +39,10 @@ class TemplateBuilder:
         if old_price > 0 and old_price > new_price:
             lines.append("")
             lines.append(f"<s>{old_price:,} so'm</s>")
-            lines.append(f"<b>{new_price:,} so'm</b> + 🚚 Kargo")
+            lines.append(f"<b>{new_price:,} so'm</b>")
         else:
             lines.append("")
-            lines.append(f"<b>{new_price:,} so'm</b> + 🚚 Kargo")
+            lines.append(f"<b>{new_price:,} so'm</b>")
 
         lines.append("")
         lines.append("Buyurtma berish uchun tugmani bosing 👇")
@@ -79,11 +79,11 @@ class TemplateBuilder:
 
         if original_price > price and original_price > 0:
             lines.append(f"<s>{original_price:,} so'm</s>")
-            lines.append(f"<b>{price:,} so'm</b> + 🚚 Kargo")
+            lines.append(f"<b>{price:,} so'm</b>")
             if discount > 0:
                 lines.append(f"Chegirma: -{discount}%")
         else:
-            lines.append(f"<b>{price:,} so'm</b> + 🚚 Kargo")
+            lines.append(f"<b>{price:,} so'm</b>")
 
         lines.append("")
 
