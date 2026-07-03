@@ -1,6 +1,9 @@
 import asyncio
 import logging
 import sys
+import os
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -14,6 +17,23 @@ from bot.middlewares.antiflood import AntiFloodMiddleware
 from bot.handlers import admin, user
 
 
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"OK")
+
+    def log_message(self, format, *args):
+        pass
+
+
+def start_http_server():
+    port = int(os.environ.get("PORT", 8080))
+    server = HTTPServer(("0.0.0.0", port), HealthHandler)
+    server.serve_forever()
+
+
 async def main():
     logging.basicConfig(
         level=logging.INFO,
@@ -25,6 +45,9 @@ async def main():
     if not BOT_TOKEN:
         log.error("BOT_TOKEN topilmadi!")
         return
+
+    threading.Thread(target=start_http_server, daemon=True).start()
+    log.info("HTTP server started on port %s", os.environ.get("PORT", 8080))
 
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher()
