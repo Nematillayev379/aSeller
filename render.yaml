@@ -1,6 +1,6 @@
 services:
   - type: worker
-    name: telegram-shop-bot
+    name: aseller-bot
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: python -m bot
@@ -16,4 +16,4 @@ services:
       - key: ALIEXPRESS_APP_SECRET
         sync: false
       - key: PYTHON_VERSION
-        value: 3.12
+        value: "3.12"
