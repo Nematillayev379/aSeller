@@ -6,7 +6,7 @@ def get_admin_main_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="📦 Mahsulotlar", callback_data="admin_ads"),
-            InlineKeyboardButton(text="🔄 Yangi mahsulot", callback_data="admin_post_now"),
+            InlineKeyboardButton(text="🔄 Post qilish", callback_data="admin_post_now"),
         ],
         [
             InlineKeyboardButton(text="📢 Kanallar", callback_data="admin_channels"),
@@ -14,9 +14,6 @@ def get_admin_main_kb() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(text="🛒 Buyurtmalar", callback_data="admin_orders"),
-            InlineKeyboardButton(text="⚙️ Sozlamalar", callback_data="admin_settings"),
-        ],
-        [
             InlineKeyboardButton(text="👥 Adminlar", callback_data="admin_users"),
         ],
     ])
@@ -43,14 +40,6 @@ def get_admin_channels_kb(channels: list) -> InlineKeyboardMarkup:
     buttons.append([InlineKeyboardButton(text="➕ Kanal qo'shish", callback_data="admin_add_channel")])
     buttons.append([InlineKeyboardButton(text="◀️ Orqaga", callback_data="admin_main")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
-
-
-def get_admin_settings_kb() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="⏱ Post intervalini o'zgartirish", callback_data="admin_set_interval")],
-        [InlineKeyboardButton(text="📈 Narx markup o'zgartirish", callback_data="admin_set_markup")],
-        [InlineKeyboardButton(text="◀️ Orqaga", callback_data="admin_main")],
-    ])
 
 
 def get_admin_users_kb(users: list) -> InlineKeyboardMarkup:

@@ -12,7 +12,7 @@ from bot.services.poster import get_poster
 from bot.services.template import template_builder
 from bot.keyboards.admin_kb import (
     get_admin_main_kb, get_admin_ads_kb, get_admin_channels_kb,
-    get_admin_settings_kb, get_admin_users_kb, get_back_kb,
+    get_admin_users_kb, get_back_kb,
 )
 
 router = Router()
@@ -26,11 +26,8 @@ class FSM(StatesGroup):
     manual_new_price = State()
     manual_sizes = State()
     manual_colors = State()
-    manual_desc = State()
     channel_id = State()
     channel_name = State()
-    interval = State()
-    markup_percent = State()
     admin_user_id = State()
 
 
@@ -74,8 +71,7 @@ async def cmd_start(message: Message, state: FSMContext):
         )
         return
     await message.answer(
-        f"Assalomu alaykum! 👋\n\n"
-        f"Admin paneliga xush kelibsiz.\n"
+        f"Admin paneli 🛠\n\n"
         f"Siz: <b>{message.from_user.full_name}</b>\n"
         f"ID: <code>{uid}</code>",
         reply_markup=get_admin_main_kb(),
@@ -118,29 +114,24 @@ async def cb_add_ad(callback: CallbackQuery, state: FSMContext):
     await state.set_state(FSM.manual_photo)
     await safe_edit(
         callback.message,
-        "📸 <b>Yangi mahsulot qo'shish</b>\n\n"
-        "1/6 — Mahsulot rasmini yuboring:\n"
-        "<i>Bekor qilish uchun 'bekor' deb yozing</i>",
+        "📸 <b>Mahsulot qo'shish</b>\n\n"
+        "1/6 — Rasm yuboring:",
         parse_mode="HTML",
     )
     await safe_answer(callback)
 
 
 @router.message(FSM.manual_photo, F.photo)
-async def msg_manual_photo(message: Message, state: FSMContext):
+async def msg_photo(message: Message, state: FSMContext):
     if not await is_admin(message.from_user.id):
         return
-    photo = message.photo[-1]
-    await state.update_data(image_file_id=photo.file_id)
+    await state.update_data(image_file_id=message.photo[-1].file_id)
     await state.set_state(FSM.manual_title)
-    await message.answer(
-        "📝 <b>2/6 — Mahsulot nomini kiriting:</b>",
-        parse_mode="HTML",
-    )
+    await message.answer("📝 <b>2/6 — Nomini kiriting:</b>", parse_mode="HTML")
 
 
 @router.message(FSM.manual_photo, F.text)
-async def msg_manual_photo_text(message: Message, state: FSMContext):
+async def msg_photo_text(message: Message, state: FSMContext):
     if not await is_admin(message.from_user.id):
         return
     if message.text.lower() in ("bekor", "cancel"):
@@ -151,7 +142,7 @@ async def msg_manual_photo_text(message: Message, state: FSMContext):
 
 
 @router.message(FSM.manual_title, F.text)
-async def msg_manual_title(message: Message, state: FSMContext):
+async def msg_title(message: Message, state: FSMContext):
     if not await is_admin(message.from_user.id):
         return
     if message.text.lower() in ("bekor", "cancel"):
@@ -160,15 +151,11 @@ async def msg_manual_title(message: Message, state: FSMContext):
         return
     await state.update_data(title=message.text.strip())
     await state.set_state(FSM.manual_old_price)
-    await message.answer(
-        "💰 <b>3/6 — Eski narxni kiriting (so'mda):</b>\n"
-        "<i>Chakana narx, masalan: 150000</i>",
-        parse_mode="HTML",
-    )
+    await message.answer("💰 <b>3/6 — Eski narx (so'm):</b>", parse_mode="HTML")
 
 
 @router.message(FSM.manual_old_price, F.text)
-async def msg_manual_old_price(message: Message, state: FSMContext):
+async def msg_old_price(message: Message, state: FSMContext):
     if not await is_admin(message.from_user.id):
         return
     if message.text.lower() in ("bekor", "cancel"):
@@ -181,15 +168,11 @@ async def msg_manual_old_price(message: Message, state: FSMContext):
         return await message.answer("⚠️ Faqat raqam kiriting:")
     await state.update_data(old_price=price)
     await state.set_state(FSM.manual_new_price)
-    await message.answer(
-        "💸 <b>4/6 — Yangi narxni kiriting (so'mda):</b>\n"
-        "<i>Chegirmali narx, masalan: 99000</i>",
-        parse_mode="HTML",
-    )
+    await message.answer("💸 <b>4/6 — Yangi narx (so'm):</b>", parse_mode="HTML")
 
 
 @router.message(FSM.manual_new_price, F.text)
-async def msg_manual_new_price(message: Message, state: FSMContext):
+async def msg_new_price(message: Message, state: FSMContext):
     if not await is_admin(message.from_user.id):
         return
     if message.text.lower() in ("bekor", "cancel"):
@@ -203,43 +186,41 @@ async def msg_manual_new_price(message: Message, state: FSMContext):
     await state.update_data(new_price=price)
     await state.set_state(FSM.manual_sizes)
     await message.answer(
-        "📏 <b>5/6 — O'lchamlarni kiriting:</b>\n"
-        "<i>Masalan: S, M, L, XL yoki 38, 39, 40, 41</i>\n"
-        "<i>Yoki 'Yo'q' deb yozing</i>",
+        "📏 <b>5/6 — O'lchamlar:</b>\n"
+        "<i>Masalan: S, M, L yoki 38, 39, 40</i>\n"
+        "<i>Yo'q bo'lsa 'yo'q' deb yozing</i>",
         parse_mode="HTML",
     )
 
 
 @router.message(FSM.manual_sizes, F.text)
-async def msg_manual_sizes(message: Message, state: FSMContext):
+async def msg_sizes(message: Message, state: FSMContext):
     if not await is_admin(message.from_user.id):
         return
     if message.text.lower() in ("bekor", "cancel"):
         await state.clear()
         await message.answer("Bekor qilindi.", reply_markup=get_admin_main_kb())
         return
-    sizes = message.text.strip() if message.text.lower() not in ("yo'q", "yoq", "skip", "o'tkazib") else ""
+    sizes = message.text.strip() if message.text.lower() not in ("yo'q", "yoq") else ""
     await state.update_data(sizes=sizes)
     await state.set_state(FSM.manual_colors)
     await message.answer(
-        "🎨 <b>6/6 — Ranglarni kiriting:</b>\n"
+        "🎨 <b>6/6 — Ranglar:</b>\n"
         "<i>Masalan: Qora, Oq, Qizil</i>\n"
-        "<i>Yoki 'Yo'q' deb yozing</i>",
+        "<i>Yo'q bo'lsa 'yo'q' deb yozing</i>",
         parse_mode="HTML",
     )
 
 
 @router.message(FSM.manual_colors, F.text)
-async def msg_manual_colors(message: Message, state: FSMContext):
+async def msg_colors(message: Message, state: FSMContext):
     if not await is_admin(message.from_user.id):
         return
     if message.text.lower() in ("bekor", "cancel"):
         await state.clear()
         await message.answer("Bekor qilindi.", reply_markup=get_admin_main_kb())
         return
-    colors = message.text.strip() if message.text.lower() not in ("yo'q", "yoq", "skip", "o'tkazib") else ""
-    await state.update_data(colors=colors)
-
+    colors = message.text.strip() if message.text.lower() not in ("yo'q", "yoq") else ""
     data = await state.get_data()
 
     ok = await db.add_ad(
@@ -253,12 +234,12 @@ async def msg_manual_colors(message: Message, state: FSMContext):
 
     if ok:
         await message.answer(
-            f"✅ <b>Mahsulot saqlandi!</b>\n\n"
+            f"✅ Mahsulot saqlandi!\n\n"
             f"📝 {data.get('title', '')}\n"
             f"💰 {data.get('old_price', 0):,} → {data.get('new_price', 0):,} so'm\n"
             f"📏 {data.get('sizes', "Yo'q")}\n"
             f"🎨 {data.get('colors', "Yo'q")}\n\n"
-            f"Kanallarga joylash uchun '🔄 Yangi mahsulot' bosing.",
+            f"Kanalga joylash uchun '🔄 Post qilish' bosing.",
             reply_markup=get_admin_main_kb(),
             parse_mode="HTML",
         )
@@ -273,43 +254,24 @@ async def cb_post_now(callback: CallbackQuery):
 
     channels = await db.get_active_channels()
     if not channels:
-        await safe_edit(callback.message, "📢 Kanallar qo'shilmagan! Avval kanal qo'shing.", reply_markup=get_admin_main_kb())
+        await safe_edit(callback.message, "📢 Kanal qo'shilmagan!", reply_markup=get_admin_main_kb())
         return await safe_answer(callback)
 
-    unposted = await db.get_unposted_ads(limit=3)
+    unposted = await db.get_unposted_ads(limit=5)
+    if not unposted:
+        await safe_edit(callback.message, "📭 Joylanmagan mahsulotlar yo'q.", reply_markup=get_admin_main_kb())
+        return await safe_answer(callback)
+
     poster = get_poster(callback.bot)
+    posted = 0
+    for ad in unposted:
+        ad_dict = dict(ad)
+        ok = await poster.post_ad_to_channels(ad_dict)
+        if ok:
+            await db.mark_ad_posted(ad_dict["id"])
+            posted += 1
 
-    if unposted:
-        posted = 0
-        for ad in unposted:
-            ad_dict = dict(ad)
-            ok = await poster.post_ad_to_channels(ad_dict)
-            if ok:
-                await db.mark_ad_posted(ad_dict["id"])
-                posted += 1
-        await safe_edit(
-            callback.message,
-            f"✅ {posted} ta mahsulot kanalga joylandi!",
-            reply_markup=get_admin_main_kb(),
-        )
-    else:
-        await safe_edit(
-            callback.message,
-            "⏳ Yangi mahsulotlar yo'q. Avtomatik olinmoqda...",
-            reply_markup=get_admin_main_kb(),
-        )
-        from bot.services.product_api import product_api
-        products = await product_api.fetch_random_products(count=3)
-        posted = 0
-        for p in products:
-            ok = await poster.post_product(p)
-            if ok:
-                posted += 1
-        await callback.message.answer(
-            f"✅ {posted}/{len(products)} ta avtomatik mahsulot joylandi!",
-            reply_markup=get_admin_main_kb(),
-        )
-
+    await safe_edit(callback.message, f"✅ {posted} ta mahsulot kanalga joylandi!", reply_markup=get_admin_main_kb())
     await safe_answer(callback)
 
 
@@ -332,9 +294,7 @@ async def cb_add_channel(callback: CallbackQuery, state: FSMContext):
     await state.set_state(FSM.channel_id)
     await safe_edit(
         callback.message,
-        "📢 Kanal ID kiriting:\n"
-        "<code>-1001234567890</code>\n\n"
-        "Botni kanalga admin qiling!",
+        "📢 Kanal ID kiriting:\n<code>-1001234567890</code>\n\nBotni kanalga admin qiling!",
         parse_mode="HTML",
     )
     await safe_answer(callback)
@@ -386,7 +346,7 @@ async def cb_ch_remove(callback: CallbackQuery):
     await safe_answer(callback, "Kanal o'chirildi!")
 
 
-# === STATS, ORDERS, SETTINGS, USERS ===
+# === STATS, ORDERS, USERS ===
 
 @router.callback_query(F.data == "admin_stats")
 async def cb_stats(callback: CallbackQuery):
@@ -411,76 +371,11 @@ async def cb_orders(callback: CallbackQuery):
         for o in orders:
             if o["status"] == "pending":
                 kb.inline_keyboard.insert(0, [
-                    InlineKeyboardButton(text=f"✅ Qabul #{o['id']}", callback_data=f"accept_order:{o['id']}"),
-                    InlineKeyboardButton(text=f"❌ Rad #{o['id']}", callback_data=f"reject_order:{o['id']}"),
+                    InlineKeyboardButton(text=f"✅ #{o['id']}", callback_data=f"accept_order:{o['id']}"),
+                    InlineKeyboardButton(text=f"❌ #{o['id']}", callback_data=f"reject_order:{o['id']}"),
                 ])
     await safe_edit(callback.message, text, reply_markup=kb, parse_mode="HTML")
     await safe_answer(callback)
-
-
-@router.callback_query(F.data == "admin_settings")
-async def cb_settings(callback: CallbackQuery):
-    if not await is_admin(callback.from_user.id):
-        return await safe_answer(callback, "Ruxsat yo'q!", show_alert=True)
-    interval = await db.get_setting("posting_interval") or "60"
-    markup = await db.get_setting("markup_percent") or "0"
-    channels = await db.get_active_channels()
-    text = (
-        "⚙️ <b>Sozlamalar</b>\n\n"
-        f"⏱ Post intervali: <b>{interval}</b> daqiqa\n"
-        f"📈 Narx markup: <b>{markup}%</b>\n"
-        f"📢 Kanallar: <b>{len(channels)}</b> ta faol"
-    )
-    await safe_edit(callback.message, text, reply_markup=get_admin_settings_kb(), parse_mode="HTML")
-    await safe_answer(callback)
-
-
-@router.callback_query(F.data == "admin_set_interval")
-async def cb_set_interval(callback: CallbackQuery, state: FSMContext):
-    if not await is_admin(callback.from_user.id):
-        return await safe_answer(callback, "Ruxsat yo'q!", show_alert=True)
-    await state.set_state(FSM.interval)
-    await safe_edit(callback.message, "⏱ Post intervalini daqiqalar kiriting (min 5):")
-    await safe_answer(callback)
-
-
-@router.message(FSM.interval, F.text)
-async def msg_interval(message: Message, state: FSMContext):
-    if not await is_admin(message.from_user.id):
-        return
-    try:
-        mins = int(message.text.strip())
-        if mins < 5:
-            raise ValueError
-    except ValueError:
-        return await message.answer("⚠️ 5 yoki undan katta son kiriting.")
-    await db.set_setting("posting_interval", str(mins))
-    await state.clear()
-    await message.answer(f"✅ Interval {mins} daqiqaga o'zgartirildi!", reply_markup=get_admin_main_kb())
-
-
-@router.callback_query(F.data == "admin_set_markup")
-async def cb_set_markup(callback: CallbackQuery, state: FSMContext):
-    if not await is_admin(callback.from_user.id):
-        return await safe_answer(callback, "Ruxsat yo'q!", show_alert=True)
-    await state.set_state(FSM.markup_percent)
-    await safe_edit(callback.message, "📈 Narx markup foizini kiriting:\nMasalan: 30 (narx 30% ga oshadi)")
-    await safe_answer(callback)
-
-
-@router.message(FSM.markup_percent, F.text)
-async def msg_markup(message: Message, state: FSMContext):
-    if not await is_admin(message.from_user.id):
-        return
-    try:
-        pct = int(message.text.strip().replace("%", ""))
-        if pct < 0 or pct > 500:
-            raise ValueError
-    except ValueError:
-        return await message.answer("⚠️ 0 dan 500 gacha son kiriting.")
-    await db.set_setting("markup_percent", str(pct))
-    await state.clear()
-    await message.answer(f"✅ Markup {pct}% ga o'zgartirildi!", reply_markup=get_admin_main_kb())
 
 
 @router.callback_query(F.data == "admin_users")
@@ -498,7 +393,7 @@ async def cb_add_user(callback: CallbackQuery, state: FSMContext):
     if not is_owner(callback.from_user.id):
         return await safe_answer(callback, "Faqat owner!", show_alert=True)
     await state.set_state(FSM.admin_user_id)
-    await safe_edit(callback.message, "👤 Admin qilmoqchi bo'lgan user ID ni kiriting:")
+    await safe_edit(callback.message, "👤 Admin ID kiriting:")
     await safe_answer(callback)
 
 
@@ -535,7 +430,7 @@ async def cb_accept_order(callback: CallbackQuery):
         return await safe_answer(callback, "Ruxsat yo'q!", show_alert=True)
     oid = int(callback.data.split(":")[1])
     await db.update_order_status(oid, "completed")
-    await safe_answer(callback, "✅ Buyurtma qabul qilindi!")
+    await safe_answer(callback, "✅ Qabul qilindi!")
 
 
 @router.callback_query(F.data.startswith("reject_order:"))
@@ -544,4 +439,4 @@ async def cb_reject_order(callback: CallbackQuery):
         return await safe_answer(callback, "Ruxsat yo'q!", show_alert=True)
     oid = int(callback.data.split(":")[1])
     await db.update_order_status(oid, "rejected")
-    await safe_answer(callback, "❌ Buyurtma rad etildi!")
+    await safe_answer(callback, "❌ Rad etildi!")

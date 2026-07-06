@@ -11,8 +11,6 @@ from aiogram.enums import ParseMode
 
 from bot.config import BOT_TOKEN, OWNER_ID
 from bot.services.database import db
-from bot.services.product_api import product_api
-from bot.services.scheduler import start_scheduler, stop_scheduler
 from bot.middlewares.antiflood import AntiFloodMiddleware
 from bot.handlers import admin, user
 
@@ -60,7 +58,6 @@ async def main():
         return
 
     threading.Thread(target=start_http_server, daemon=True).start()
-    log.info("HTTP server started on port %s", os.environ.get("PORT", 8080))
 
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher()
@@ -76,15 +73,10 @@ async def main():
     log.info("Bot ishga tushdi! Owner ID: %s", OWNER_ID)
 
     asyncio.create_task(self_ping())
-    log.info("Self-ping har 10 daqiqada ishlaydi")
-
-    await start_scheduler(bot)
 
     try:
         await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
     finally:
-        await stop_scheduler()
-        await product_api.close()
         await db.close()
         await bot.session.close()
 
